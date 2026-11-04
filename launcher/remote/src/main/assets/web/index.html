@@ -1,0 +1,1709 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="X96 Remote">
+<title>X96 Remote — Premium Edition</title>
+<style>
+:root {
+  --spring-timing: cubic-bezier(0.16, 1, 0.3, 1);
+  --response-quick: 120ms;
+  --response-medium: 240ms;
+  --glass-bg: rgba(28, 28, 30, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-highlight: rgba(255, 255, 255, 0.14);
+  color-scheme: dark only;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  background: #000;
+  color: #f5f5f7;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+}
+
+#app {
+  width: 100%;
+  max-width: 440px;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  isolation: isolate;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Header */
+.header {
+  flex-shrink: 0;
+  padding: 14px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #2c2c2e 0%, #171718 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.logo-text {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  transition: transform var(--response-quick) var(--spring-timing), background var(--response-quick) ease-out;
+}
+
+.header-btn:active, .header-btn.pressed {
+  transform: scale(0.88);
+  background: rgba(58, 58, 60, 0.85);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #48484a;
+  transition: background var(--response-medium) var(--spring-timing);
+}
+
+.status-dot.online {
+  background: #30d158;
+  box-shadow: 0 0 0 4px rgba(48, 209, 88, 0.2);
+}
+
+/* Main content */
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: 0 20px 20px;
+}
+
+.content::-webkit-scrollbar {
+  display: none;
+}
+
+.screen {
+  display: none;
+  animation: screenFade 220ms var(--spring-timing);
+}
+
+.screen.active {
+  display: block;
+}
+
+@keyframes screenFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* D-pad */
+.dpad-container {
+  padding: 16px 0 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dpad {
+  width: min(80vw, 335px);
+  height: min(80vw, 335px);
+  max-width: 335px;
+  max-height: 335px;
+  position: relative;
+  border-radius: 50%;
+  background: 
+    radial-gradient(circle at 35% 25%, rgba(58, 58, 62, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, #1c1c1e 0%, #0a0a0a 100%);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 -4px 14px rgba(0, 0, 0, 0.65),
+    0 16px 44px rgba(0, 0, 0, 0.7);
+  touch-action: none;
+  isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dpad::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+.dpad-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.dpad-wedge {
+  fill: rgba(255, 255, 255, 0.03);
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+  cursor: pointer;
+  outline: none;
+  transition: fill .24s var(--spring-timing), stroke .24s var(--spring-timing);
+}
+
+.dpad-wedge.active {
+  fill: rgba(255, 255, 255, 0.18);
+  stroke: rgba(255, 255, 255, 0.28);
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.35));
+  transition: fill 0.04s ease-out, stroke 0.04s ease-out;
+}
+
+.dpad-arrows {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.dpad-arrow {
+  transition: stroke .24s var(--spring-timing);
+}
+
+.dpad-arrow.active {
+  stroke: #fff;
+  transition: stroke 0.04s ease-out;
+}
+
+.dpad-ok {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: 31%;
+  height: 31%;
+  border-radius: 50%;
+  background: 
+    radial-gradient(circle at 38% 28%, #3a3a3c 0%, #2c2c2e 50%, #1c1c1e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 
+    0 0 0 6px rgba(12, 12, 12, 0.95),
+    0 0 0 7px rgba(255, 255, 255, 0.08),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.65);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  touch-action: none;
+  z-index: 10;
+  transition: transform .22s var(--spring-timing), background .22s ease-out;
+}
+
+.dpad-ok:active, .dpad-ok.pressed {
+  transform: translate(-50%, -50%) scale(0.92);
+  background: #44454a;
+  box-shadow: 0 0 0 6px rgba(12, 12, 12, 0.95), 0 0 0 7px rgba(255, 255, 255, 0.12), 0 0 20px rgba(255, 255, 255, 0.25);
+  transition: transform 0.04s ease-out;
+}
+
+/* Quick actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.action-btn {
+  aspect-ratio: 1;
+  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    inset 0 1px 0 var(--glass-highlight),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform .22s var(--spring-timing), background .22s ease-out;
+}
+
+.action-btn:active, .action-btn.pressed {
+  transform: scale(0.92);
+  background: rgba(48, 48, 52, 0.9);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.15);
+  transition: transform 0.04s ease-out;
+}
+
+.action-icon {
+  font-size: 21px;
+}
+
+.action-label {
+  font-size: 10.5px;
+  font-weight: 550;
+  letter-spacing: -0.1px;
+  color: rgba(235, 235, 245, 0.65);
+}
+
+/* Volume bar */
+.volume-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  margin-top: 14px;
+  padding: 0;
+  border-radius: 19px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    inset 0 1px 0 var(--glass-highlight),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  height: 54px;
+}
+
+.volume-btn {
+  background: transparent;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  transition: background .2s var(--spring-timing), transform .2s var(--spring-timing);
+  border-radius: 0;
+}
+
+.volume-btn:active, .volume-btn.pressed {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(0.92);
+  transition: transform 0.04s ease-out;
+}
+
+.volume-btn + .volume-btn {
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Apps */
+.section-header {
+  margin: 22px 0 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.section-title {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.section-subtitle {
+  font-size: 12px;
+  color: rgba(235, 235, 245, 0.5);
+}
+
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.app-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+}
+
+.app-icon {
+  width: 62px;
+  height: 62px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #242426 0%, #171719 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 700;
+  transition: transform .22s var(--spring-timing), box-shadow .22s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-btn:active .app-icon, .app-btn.pressed .app-icon {
+  transform: scale(0.90);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
+  transition: transform 0.04s ease-out;
+}
+
+.app-name {
+  font-size: 10.5px;
+  font-weight: 550;
+  letter-spacing: -0.1px;
+  color: rgba(235, 235, 245, 0.7);
+  text-align: center;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Trackpad */
+.trackpad-container {
+  border-radius: 28px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    inset 0 1px 0 var(--glass-highlight),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  margin-top: 14px;
+}
+
+.trackpad {
+  aspect-ratio: 1.1;
+  min-height: 230px;
+  border-radius: 20px;
+  background: 
+    radial-gradient(circle at 50% 35%, #1c1c1e 0%, #0a0a0a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 
+    inset 0 -2px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.03);
+  position: relative;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.touch-indicator {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--response-quick) var(--spring-timing);
+  transform: translate(-50%, -50%);
+}
+
+.trackpad.tracking .touch-indicator {
+  opacity: 1;
+}
+
+.trackpad-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.track-btn-ok {
+  width: 100%;
+  height: 54px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+.track-btn-ok:active, .track-btn-ok.pressed {
+  transform: scale(0.96);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.12));
+}
+
+.track-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.track-btn {
+  height: 48px;
+  border-radius: 16px;
+  background: rgba(58, 58, 60, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 550;
+  transition: transform .22s var(--spring-timing), background .22s ease-out;
+}
+
+.track-btn:active, .track-btn.pressed {
+  transform: scale(0.94);
+  background: rgba(72, 72, 74, 0.7);
+  transition: transform 0.04s ease-out;
+}
+
+/* Keyboard */
+.keyboard-area {
+  margin-top: 16px;
+}
+
+.keyboard-live-toggle {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 13.5px;
+  font-weight: 550;
+  user-select: none;
+}
+
+.toggle-label input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-switch {
+  width: 38px;
+  height: 22px;
+  background: rgba(120, 120, 128, 0.35);
+  border-radius: 12px;
+  position: relative;
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.22s var(--spring-timing);
+}
+
+.toggle-label input:checked + .toggle-switch {
+  background: #34c759;
+}
+
+.toggle-label input:checked + .toggle-switch::after {
+  transform: translateX(16px);
+}
+
+.action-icon svg {
+  display: block;
+}
+
+.input-field {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    inset 0 1px 0 var(--glass-highlight),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 16px !important;
+  color: #fff;
+  outline: none;
+  transition: border-color var(--response-quick) var(--spring-timing);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input-field::placeholder {
+  color: rgba(235, 235, 245, 0.35);
+}
+
+.input-field:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.keyboard-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.keyboard-btn {
+  height: 48px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  transition: transform .22s var(--spring-timing), background .22s ease-out;
+}
+
+.keyboard-btn.secondary {
+  background: rgba(58, 58, 60, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.keyboard-btn.secondary:active, .keyboard-btn.secondary.pressed {
+  transform: scale(0.95);
+  background: rgba(72, 72, 74, 0.7);
+  transition: transform 0.04s ease-out;
+}
+
+.keyboard-btn.primary {
+  background: linear-gradient(180deg, #ffffff 0%, #e5e5e7 100%);
+  color: #000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.keyboard-btn.primary:active, .keyboard-btn.primary.pressed {
+  transform: scale(0.95);
+  transition: transform 0.04s ease-out;
+}
+
+/* Tab bar */
+.tabs {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 8px 20px calc(10px + env(safe-area-inset-bottom));
+  background: 
+    linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.85) 100%);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tab {
+  height: 54px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 550;
+  letter-spacing: -0.1px;
+  color: rgba(235, 235, 245, 0.5);
+  transition: all var(--response-medium) var(--spring-timing);
+}
+
+.tab-icon {
+  font-size: 21px;
+  transition: transform var(--response-quick) var(--spring-timing);
+}
+
+.tab.active {
+  background: rgba(118, 118, 128, 0.28);
+  color: #fff;
+}
+
+.tab:active .tab-icon, .tab.pressed .tab-icon {
+  transform: scale(0.90);
+  transition: transform 0.04s ease-out;
+}
+
+/* Settings overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  display: none;
+  align-items: flex-end;
+  z-index: 100;
+  animation: overlayFade 240ms var(--spring-timing);
+}
+
+.overlay.open {
+  display: flex;
+}
+
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sheet {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  background: #1c1c1e;
+  border-radius: 28px 28px 0 0;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom));
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: sheetSlide 280ms var(--spring-timing);
+}
+
+@keyframes sheetSlide {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 5px;
+  background: rgba(235, 235, 245, 0.3);
+  border-radius: 100px;
+  margin: 0 auto 20px;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.sheet-title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  margin: 0;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(118, 118, 128, 0.24);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  transition: background var(--response-quick) var(--spring-timing);
+}
+
+.close-btn:active {
+  background: rgba(118, 118, 128, 0.36);
+}
+
+.settings-group {
+  margin-bottom: 18px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 550;
+  margin-bottom: 7px;
+  color: rgba(235, 235, 245, 0.6);
+}
+
+.settings-input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 12px;
+  background: rgba(58, 58, 60, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 16px;
+  color: #fff;
+  outline: none;
+  transition: border-color var(--response-quick) var(--spring-timing);
+}
+
+.settings-input:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.settings-btn {
+  width: 100%;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #e5e5e7 100%);
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  transition: transform var(--response-quick) var(--spring-timing);
+}
+
+.settings-btn:active {
+  transform: scale(0.98);
+}
+
+.settings-note {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: rgba(235, 235, 245, 0.5);
+  margin-top: 14px;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: calc(75px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: rgba(36, 36, 38, 0.95);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  padding: 12px 18px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 550;
+  text-align: center;
+  max-width: calc(100% - 36px);
+  min-width: 180px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 200;
+  transition: opacity .2s var(--spring-timing), transform .2s var(--spring-timing);
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-height: 700px) {
+  .dpad {
+    width: min(72vw, 290px);
+    height: min(72vw, 290px);
+    max-width: 290px;
+    max-height: 290px;
+  }
+  .section-header { margin: 16px 0 10px; }
+  .apps-grid { gap: 10px; }
+  .app-icon { width: 56px; height: 56px; font-size: 20px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">X96</div>
+      <div class="logo-text">Remote</div>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" id="ramClean" aria-label="Nettoyer la RAM" title="Nettoyer la RAM (+600 Mo libérés)">🧹</button>
+      <button class="header-btn" id="powerBtn" aria-label="Veille / Réveil" title="Veille / Réveil">⏻</button>
+      <button class="header-btn" id="settingsBtn" aria-label="Paramètres" title="Paramètres">
+        <div class="status-dot" id="statusDot"></div>
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+    <!-- Remote screen -->
+    <div id="screenRemote" class="screen active">
+      <div class="dpad-container">
+        <div class="dpad" id="dpad">
+          <svg class="dpad-svg" viewBox="0 0 300 300" aria-hidden="true">
+            <path class="dpad-wedge" data-dir="up" d="M 53.65 42.99 A 144 144 0 0 1 246.35 42.99 L 194.16 100.96 A 66 66 0 0 0 105.84 100.96 Z"/>
+            <path class="dpad-wedge" data-dir="right" d="M 257.01 53.65 A 144 144 0 0 1 257.01 246.35 L 199.04 194.16 A 66 66 0 0 0 199.04 105.84 Z"/>
+            <path class="dpad-wedge" data-dir="down" d="M 246.35 257.01 A 144 144 0 0 1 53.65 257.01 L 105.84 199.04 A 66 66 0 0 0 194.16 199.04 Z"/>
+            <path class="dpad-wedge" data-dir="left" d="M 42.99 246.35 A 144 144 0 0 1 42.99 53.65 L 100.96 105.84 A 66 66 0 0 0 100.96 194.16 Z"/>
+            <g class="dpad-arrows">
+              <path class="dpad-arrow" data-dir="up" d="m142 49 8-8 8 8"/>
+              <path class="dpad-arrow" data-dir="right" d="m251 142 8 8-8 8"/>
+              <path class="dpad-arrow" data-dir="down" d="m142 251 8 8 8-8"/>
+              <path class="dpad-arrow" data-dir="left" d="m49 142-8 8 8 8"/>
+            </g>
+          </svg>
+          <button class="dpad-ok" id="okBtn" data-key="CENTER">OK</button>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="action-btn" data-key="BACK">
+          <div class="action-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 14 4 9 9 4"></polyline>
+              <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
+            </svg>
+          </div>
+          <div class="action-label">Retour</div>
+        </button>
+        <button class="action-btn" data-key="HOME">
+          <div class="action-icon">⌂</div>
+          <div class="action-label">Accueil</div>
+        </button>
+        <button class="action-btn" data-key="MEDIA_PLAY_PAUSE">
+          <div class="action-icon">▶</div>
+          <div class="action-label">Lecture</div>
+        </button>
+        <button class="action-btn" data-key="MENU">
+          <div class="action-icon">☰</div>
+          <div class="action-label">Menu</div>
+        </button>
+      </div>
+
+      <div class="volume-bar">
+        <button class="volume-btn" data-key="VOLUME_DOWN" aria-label="Volume -">🔉</button>
+        <button class="volume-btn" data-key="VOLUME_MUTE" aria-label="Muet">🔇</button>
+        <button class="volume-btn" data-key="VOLUME_UP" aria-label="Volume +">🔊</button>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">Applications</div>
+        <div class="section-subtitle">Accès rapide</div>
+      </div>
+
+      <div class="apps-grid" id="appsGrid"></div>
+    </div>
+
+    <!-- Trackpad screen -->
+    <div id="screenTrackpad" class="screen">
+      <div class="section-header">
+        <div class="section-title">Trackpad</div>
+      </div>
+
+      <div class="trackpad-container">
+        <div class="trackpad" id="trackpad">
+          <div class="touch-indicator" id="touchIndicator"></div>
+        </div>
+        <div class="trackpad-buttons">
+          <button class="track-btn track-btn-ok" id="trackOk">
+            <span>OK</span>
+          </button>
+          <div class="track-actions">
+            <button class="track-btn" id="clickLeft">
+              <span>Clic gauche</span>
+            </button>
+            <button class="track-btn" id="clickRight">
+              <span>Clic droit</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard screen -->
+    <div id="screenKeyboard" class="screen">
+      <div class="section-header">
+        <div class="section-title">Clavier</div>
+      </div>
+
+      <div class="keyboard-area">
+        <div class="keyboard-live-toggle">
+          <label class="toggle-label" for="liveTypingToggle">
+            <input type="checkbox" id="liveTypingToggle" checked>
+            <span class="toggle-switch"></span>
+            <span class="toggle-text">⚡ Frappe en direct sur la TV</span>
+          </label>
+        </div>
+        <input 
+          type="text" 
+          id="textInput" 
+          class="input-field" 
+          placeholder="Écris ici…"
+          autocomplete="off"
+          autocapitalize="sentences"
+        >
+        <div class="keyboard-actions">
+          <button class="keyboard-btn secondary" id="clearBtn">Effacer</button>
+          <button class="keyboard-btn primary" id="sendBtn">Envoyer sur la TV</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="tabs">
+    <button class="tab active" data-screen="Remote">
+      <div class="tab-icon">📱</div>
+      <div>Télécommande</div>
+    </button>
+    <button class="tab" data-screen="Trackpad">
+      <div class="tab-icon">👆</div>
+      <div>Trackpad</div>
+    </button>
+    <button class="tab" data-screen="Keyboard">
+      <div class="tab-icon">⌨️</div>
+      <div>Clavier</div>
+    </button>
+  </nav>
+</div>
+
+<!-- Settings overlay -->
+<div class="overlay" id="settingsOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h2 class="sheet-title">Réglages</h2>
+      <button class="close-btn" id="closeBtn">✕</button>
+    </div>
+
+    <div class="settings-group">
+      <label class="settings-label" for="serverUrl">Serveur X96</label>
+      <input 
+        type="url" 
+        id="serverUrl" 
+        class="settings-input" 
+        placeholder="http://192.168.1.28:8080"
+        spellcheck="false"
+      >
+    </div>
+
+    <div class="settings-group">
+      <label class="settings-label" for="pinCode">Code PIN</label>
+      <input 
+        type="password" 
+        id="pinCode" 
+        class="settings-input" 
+        placeholder="9696"
+        inputmode="numeric"
+        maxlength="12"
+      >
+    </div>
+
+    <button class="settings-btn" id="connectBtn">Se connecter</button>
+
+    <p class="settings-note">
+      Connexion locale sécurisée vers la box X96 Mini (Android 7.1.2).
+      Injection matérielle Linux directe via <code>/dev/input/event1</code> (&lt; 25 ms).
+    </p>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+'use strict';
+
+// 100% Locked Viewport: Prevent any double-tap zoom, pinch-zoom, or focus-zoom
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 350) {
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, { passive: false });
+
+document.addEventListener('touchstart', function(e) {
+  if (e.touches && e.touches.length > 1) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+['gesturestart', 'gesturechange', 'gestureend'].forEach(function(ev) {
+  document.addEventListener(ev, function(e) {
+    e.preventDefault();
+  }, { passive: false });
+});
+
+window.addEventListener('scroll', function() {
+  if (window.scrollX !== 0 || window.scrollY !== 0) {
+    window.scrollTo(0, 0);
+  }
+});
+
+const storage = {
+  get: (key, fallback) => {
+    try {
+      return localStorage.getItem(key) || fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  set: (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {}
+  }
+};
+
+const rawHost = storage.get('x96.host', location.protocol === 'http:' || location.protocol === 'https:' ? location.origin : 'http://192.168.1.28:8080');
+const config = {
+  host: rawHost.replace(/\/$/, ''),
+  token: storage.get('x96.token', 'aed0bb14-33ac-41'),
+  online: false
+};
+
+// Hardware Haptic Vibration (Android navigator.vibrate + iOS Native Taptic Engine bridge)
+function haptic(ms = 25) {
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.haptic) {
+    try { window.webkit.messageHandlers.haptic.postMessage('tap'); } catch {}
+  }
+  if (typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate(ms); } catch {}
+  }
+}
+
+// Pressed state tracking with graceful fade-out
+const pressedEls = new Set();
+function markPressed(el) {
+  if (!el) return;
+  el.classList.add('pressed');
+  pressedEls.add(el);
+}
+function unmarkPressed(el) {
+  if (el) {
+    el.classList.remove('pressed');
+    pressedEls.delete(el);
+  }
+}
+function clearAllPressed() {
+  pressedEls.forEach(el => el.classList.remove('pressed'));
+  pressedEls.clear();
+}
+
+['pointerup', 'pointercancel', 'touchend', 'touchcancel'].forEach(ev => {
+  window.addEventListener(ev, clearAllPressed, { capture: true, passive: true });
+});
+window.addEventListener('blur', clearAllPressed);
+
+// Toast notification
+let toastTimer;
+function toast(message, duration = 2600) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('visible'), duration);
+}
+
+// Connection status
+function setOnline(status) {
+  config.online = !!status;
+  document.getElementById('statusDot').classList.toggle('online', config.online);
+}
+
+// Instant hardware API call - zero wait, zero retry delay
+function apiCall(endpoint, params = {}) {
+  try {
+    const url = new URL(config.host + endpoint);
+    for (const [k, v] of Object.entries(params)) {
+      url.searchParams.set(k, v);
+    }
+    return fetch(url.toString(), { method: 'GET', cache: 'no-store', keepalive: true })
+      .then(r => r.json())
+      .catch(() => ({}));
+  } catch {
+    return Promise.resolve({});
+  }
+}
+
+const keyMap = {
+  UP: 19, DOWN: 20, LEFT: 21, RIGHT: 22, CENTER: 23,
+  BACK: 4, HOME: 3, MEDIA_PLAY_PAUSE: 85, MENU: 82,
+  VOLUME_UP: 24, VOLUME_DOWN: 25, VOLUME_MUTE: 164, POWER: 26,
+  DEL: 67, ENTER: 66
+};
+
+function sendKey(key) {
+  const code = keyMap[key];
+  if (!code) return;
+  // Instant fire-and-forget: 0ms browser latency
+  try {
+    fetch(config.host + '/api/key?code=' + code, { method: 'GET', cache: 'no-store', keepalive: true }).catch(() => {});
+  } catch {}
+}
+
+// Health check with auto-reconnection
+async function checkHealth() {
+  try {
+    await apiCall('/api/status');
+    setOnline(true);
+  } catch {
+    const paired = await autoPair();
+    if (paired) {
+      try {
+        await apiCall('/api/status');
+        setOnline(true);
+        return;
+      } catch {}
+    }
+    setOnline(false);
+  }
+}
+
+// RAM Optimizer Button
+const ramCleanBtn = document.getElementById('ramClean');
+ramCleanBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  markPressed(ramCleanBtn);
+  haptic(45);
+  toast('🧹 Optimisation de la mémoire RAM en cours...');
+  apiCall('/api/clean').then(() => {
+    toast('✨ RAM optimisée : ~600 Mo libérés !');
+  }).catch(() => {
+    toast('Échec nettoyage RAM (reconnecter)');
+  });
+});
+
+// Power Button
+const powerBtn = document.getElementById('powerBtn');
+powerBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  markPressed(powerBtn);
+  haptic(35);
+  apiCall('/api/power').then(() => {
+    toast('Signal Veille / Réveil envoyé');
+  }).catch(e => console.error(e));
+});
+
+// D-pad interaction
+const dpad = document.getElementById('dpad');
+const dpadRect = () => dpad.getBoundingClientRect();
+let activeDirection = null;
+let holdTimer = null;
+let repeatTimer = null;
+
+const DIRECTION_KEYS = { up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT' };
+const REPEATABLE = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'VOLUME_UP', 'VOLUME_DOWN'];
+
+function getDpadDirection(x, y) {
+  const rect = dpadRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const dx = x - cx;
+  const dy = y - cy;
+  
+  const distance = Math.hypot(dx, dy);
+  const width = rect.width;
+  
+  if (distance < width * 0.18 || distance > width * 0.49) return null;
+  
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  if (angle >= -45 && angle < 45) return 'right';
+  if (angle >= 45 && angle < 135) return 'down';
+  if (angle >= -135 && angle < -45) return 'up';
+  return 'left';
+}
+
+function setWedgeState(direction, active) {
+  if (!direction) return;
+  dpad.querySelectorAll(`[data-dir="${direction}"]`).forEach(el => {
+    el.classList.toggle('active', active);
+  });
+}
+
+function startDpadPress(direction) {
+  if (!direction || activeDirection === direction) return;
+  stopDpadPress();
+  activeDirection = direction;
+  setWedgeState(direction, true);
+  
+  const key = DIRECTION_KEYS[direction];
+  haptic(35);
+  sendKey(key);
+  
+  if (REPEATABLE.includes(key)) {
+    holdTimer = setTimeout(() => {
+      repeatTimer = setInterval(() => {
+        haptic(25);
+        sendKey(key);
+      }, 140);
+    }, 360);
+  }
+}
+
+function stopDpadPress() {
+  if (activeDirection) {
+    setWedgeState(activeDirection, false);
+    activeDirection = null;
+  }
+  clearTimeout(holdTimer);
+  clearInterval(repeatTimer);
+  holdTimer = null;
+  repeatTimer = null;
+}
+
+let dpadPointerId = null;
+dpad.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.dpad-ok')) return;
+  e.preventDefault();
+  dpadPointerId = e.pointerId;
+  startDpadPress(getDpadDirection(e.clientX, e.clientY));
+});
+
+dpad.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== dpadPointerId) return;
+  const direction = getDpadDirection(e.clientX, e.clientY);
+  if (direction !== activeDirection) {
+    if (direction) startDpadPress(direction);
+    else stopDpadPress();
+  }
+});
+
+function endDpadPointer(e) {
+  if (e.pointerId !== dpadPointerId) return;
+  dpadPointerId = null;
+  stopDpadPress();
+}
+dpad.addEventListener('pointerup', endDpadPointer);
+dpad.addEventListener('pointercancel', endDpadPointer);
+dpad.addEventListener('pointerleave', endDpadPointer);
+
+// OK button
+const okBtn = document.getElementById('okBtn');
+okBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  markPressed(okBtn);
+  haptic(35);
+  sendKey('CENTER');
+});
+okBtn.addEventListener('pointerup', () => unmarkPressed(okBtn));
+okBtn.addEventListener('pointercancel', () => unmarkPressed(okBtn));
+
+// Quick action buttons & volume
+document.querySelectorAll('[data-key]').forEach(btn => {
+  if (btn === okBtn) return;
+  
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    markPressed(btn);
+    const key = btn.dataset.key;
+    haptic(35);
+    sendKey(key);
+    
+    if (REPEATABLE.includes(key)) {
+      holdTimer = setTimeout(() => {
+        repeatTimer = setInterval(() => {
+          haptic(25);
+          sendKey(key);
+        }, 140);
+      }, 360);
+    }
+  });
+  
+  btn.addEventListener('pointerup', () => { unmarkPressed(btn); stopDpadPress(); });
+  btn.addEventListener('pointercancel', () => { unmarkPressed(btn); stopDpadPress(); });
+  btn.addEventListener('pointerleave', () => { unmarkPressed(btn); stopDpadPress(); });
+});
+
+// Clean Apps List
+const apps = [
+  { name: 'CleanYourTV', icon: 'TV', pkg: 'com.gathin.tvhome', color: '#c7c7c9' },
+  { name: 'YouTube', icon: '▶', pkg: 'org.smarttube.stable', color: '#ff4f51' },
+  { name: 'Kodi', icon: '◆', pkg: 'org.xbmc.kodi', color: '#57bade' },
+  { name: 'Crunchyroll', icon: '◉', pkg: 'com.crunchyroll.crunchyroid', color: '#ff8735' },
+  { name: 'Disney+', icon: 'D+', pkg: 'com.disney.disneyplus', color: '#eaeaff' },
+  { name: 'Paramount+', icon: 'P+', pkg: 'com.cbs.ca', color: '#c5ddff' },
+  { name: 'Opera GX', icon: 'GX', pkg: 'app.sofabrowser', color: '#ff1b44' },
+  { name: 'Paramètres', icon: '⚙', pkg: 'com.android.tv.settings', color: '#a5a5ab' }
+];
+
+const appsGrid = document.getElementById('appsGrid');
+apps.forEach(app => {
+  const btn = document.createElement('button');
+  btn.className = 'app-btn';
+  btn.innerHTML = `
+    <div class="app-icon" style="color:${app.color}">${app.icon}</div>
+    <div class="app-name">${app.name}</div>
+  `;
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    markPressed(btn);
+    haptic(35);
+    apiCall('/api/launch', { pkg: app.pkg }).then(() => {
+      toast('Lancement de ' + app.name);
+    }).catch(err => toast('Erreur: ' + err.message));
+  });
+  btn.addEventListener('pointerup', () => unmarkPressed(btn));
+  btn.addEventListener('pointercancel', () => unmarkPressed(btn));
+  btn.addEventListener('pointerleave', () => unmarkPressed(btn));
+  appsGrid.appendChild(btn);
+});
+
+// Trackpad - Real Mouse Cursor Control
+const trackpad = document.getElementById('trackpad');
+const touchIndicator = document.getElementById('touchIndicator');
+let pointer = null;
+let startX = 0, startY = 0, lastX = 0, lastY = 0, moved = false;
+let pendingDx = 0, pendingDy = 0;
+let isSendingMouse = false;
+
+function sendMouseDelta(dx, dy) {
+  pendingDx += dx;
+  pendingDy += dy;
+  if (!isSendingMouse) {
+    flushMouseMove();
+  }
+}
+
+function flushMouseMove() {
+  if (pendingDx === 0 && pendingDy === 0) {
+    isSendingMouse = false;
+    return;
+  }
+  isSendingMouse = true;
+  const dx = pendingDx;
+  const dy = pendingDy;
+  pendingDx = 0;
+  pendingDy = 0;
+
+  const url = (config.host || '') + '/api/mouse?dx=' + dx.toFixed(1) + '&dy=' + dy.toFixed(1);
+  fetch(url, { method: 'GET', cache: 'no-store', keepalive: true })
+    .catch(() => {})
+    .finally(() => {
+      if (pendingDx !== 0 || pendingDy !== 0) {
+        flushMouseMove();
+      } else {
+        isSendingMouse = false;
+      }
+    });
+}
+
+function sendMouseAction(action) {
+  const url = (config.host || '') + '/api/mouse?action=' + action;
+  fetch(url, { method: 'GET', cache: 'no-store', keepalive: true }).catch(() => {});
+}
+
+trackpad.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  pointer = { id: e.pointerId, start: performance.now() };
+  startX = lastX = e.clientX;
+  startY = lastY = e.clientY;
+  moved = false;
+  trackpad.classList.add('tracking');
+  updateTouchIndicator(e);
+  haptic(20);
+});
+
+function updateTouchIndicator(e) {
+  const rect = trackpad.getBoundingClientRect();
+  touchIndicator.style.left = (e.clientX - rect.left) + 'px';
+  touchIndicator.style.top = (e.clientY - rect.top) + 'px';
+}
+
+trackpad.addEventListener('pointermove', (e) => {
+  if (!pointer || e.pointerId !== pointer.id) return;
+  e.preventDefault();
+  updateTouchIndicator(e);
+
+  const rawDx = e.clientX - lastX;
+  const rawDy = e.clientY - lastY;
+  lastX = e.clientX;
+  lastY = e.clientY;
+
+  const dist = Math.hypot(rawDx, rawDy);
+  if (dist > 0.4) {
+    if (Math.hypot(e.clientX - startX, e.clientY - startY) > 7) {
+      moved = true;
+    }
+    const speed = Math.min(dist / 4, 3.2);
+    const accel = 1.0 + speed * 0.45;
+    sendMouseDelta(rawDx * accel, rawDy * accel);
+  }
+});
+
+trackpad.addEventListener('pointerup', (e) => {
+  if (!pointer || e.pointerId !== pointer.id) return;
+  const isTap = !moved && (performance.now() - pointer.start < 300);
+  pointer = null;
+  trackpad.classList.remove('tracking');
+  if (isTap) {
+    haptic(35);
+    sendMouseAction('click');
+  }
+});
+
+trackpad.addEventListener('pointercancel', () => {
+  pointer = null;
+  trackpad.classList.remove('tracking');
+});
+
+// Trackpad Click buttons
+const trackOk = document.getElementById('trackOk');
+const clickLeft = document.getElementById('clickLeft');
+const clickRight = document.getElementById('clickRight');
+
+if (trackOk) {
+  trackOk.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    markPressed(trackOk);
+    haptic(35);
+    sendMouseAction('click');
+  });
+  trackOk.addEventListener('pointerup', () => unmarkPressed(trackOk));
+  trackOk.addEventListener('pointercancel', () => unmarkPressed(trackOk));
+}
+
+clickLeft.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  markPressed(clickLeft);
+  haptic(35);
+  sendMouseAction('click');
+});
+clickLeft.addEventListener('pointerup', () => unmarkPressed(clickLeft));
+clickLeft.addEventListener('pointercancel', () => unmarkPressed(clickLeft));
+
+clickRight.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  markPressed(clickRight);
+  haptic(35);
+  sendMouseAction('right');
+});
+clickRight.addEventListener('pointerup', () => unmarkPressed(clickRight));
+clickRight.addEventListener('pointercancel', () => unmarkPressed(clickRight));
+
+// Keyboard
+const textInput = document.getElementById('textInput');
+const clearBtn = document.getElementById('clearBtn');
+const sendBtn = document.getElementById('sendBtn');
+const liveTypingToggle = document.getElementById('liveTypingToggle');
+let lastLiveText = '';
+
+textInput.addEventListener('input', () => {
+  if (!liveTypingToggle || !liveTypingToggle.checked) return;
+  const current = textInput.value;
+  if (current.length > lastLiveText.length) {
+    const diff = current.slice(lastLiveText.length);
+    fetch((config.host || '') + '/api/text?text=' + encodeURIComponent(diff), {
+      method: 'GET',
+      cache: 'no-store',
+      keepalive: true
+    }).catch(() => {});
+  } else if (current.length < lastLiveText.length) {
+    const count = lastLiveText.length - current.length;
+    for (let i = 0; i < count; i++) {
+      sendKey('DEL');
+    }
+  }
+  lastLiveText = current;
+});
+
+clearBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  markPressed(clearBtn);
+  haptic(25);
+  if (liveTypingToggle && liveTypingToggle.checked && textInput.value.length > 0) {
+    const len = textInput.value.length;
+    for (let i = 0; i < len; i++) {
+      sendKey('DEL');
+    }
+  }
+  textInput.value = '';
+  lastLiveText = '';
+  textInput.focus();
+  setTimeout(() => unmarkPressed(clearBtn), 150);
+});
+
+async function doSendText() {
+  const text = textInput.value;
+  if (!text || !text.trim()) {
+    toast('Écris du texte d\'abord');
+    return;
+  }
+  haptic(35);
+  try {
+    apiCall('/api/text', { text: text });
+    textInput.value = '';
+    lastLiveText = '';
+    toast('Texte envoyé sur la TV');
+  } catch (err) {
+    toast('Erreur: ' + err.message);
+  }
+}
+
+sendBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  markPressed(sendBtn);
+  doSendText();
+  setTimeout(() => unmarkPressed(sendBtn), 150);
+});
+sendBtn.addEventListener('pointerdown', (e) => {
+  markPressed(sendBtn);
+});
+sendBtn.addEventListener('pointerup', () => unmarkPressed(sendBtn));
+
+textInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (liveTypingToggle && liveTypingToggle.checked) {
+      sendKey('ENTER');
+    } else {
+      doSendText();
+    }
+  }
+});
+
+// Tab navigation
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('pointerdown', () => {
+    markPressed(tab);
+    haptic(30);
+    const screen = tab.dataset.screen;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === `screen${screen}`));
+  });
+});
+
+// Settings
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsOverlay = document.getElementById('settingsOverlay');
+const closeBtn = document.getElementById('closeBtn');
+const connectBtn = document.getElementById('connectBtn');
+const serverUrl = document.getElementById('serverUrl');
+const pinCode = document.getElementById('pinCode');
+
+settingsBtn.addEventListener('pointerdown', () => {
+  markPressed(settingsBtn);
+  settingsOverlay.classList.add('open');
+  serverUrl.value = config.host;
+  pinCode.value = '';
+  haptic(25);
+});
+
+closeBtn.addEventListener('pointerdown', () => {
+  settingsOverlay.classList.remove('open');
+  haptic(25);
+});
+
+settingsOverlay.addEventListener('click', (e) => {
+  if (e.target === settingsOverlay) {
+    settingsOverlay.classList.remove('open');
+  }
+});
+
+connectBtn.addEventListener('pointerdown', async (e) => {
+  e.preventDefault();
+  markPressed(connectBtn);
+  const host = serverUrl.value.trim().replace(/\/$/, '');
+  const pin = pinCode.value.trim();
+  
+  if (!/^https?:\/\//.test(host)) {
+    toast('Adresse invalide (ex: http://192.168.1.28:8080)');
+    return;
+  }
+  
+  config.host = host;
+  storage.set('x96.host', host);
+  haptic(35);
+  
+  try {
+    if (pin) {
+      const res = await apiCall('/api/pair', { pin });
+      if (res.token) {
+        config.token = res.token;
+        storage.set('x96.token', res.token);
+      }
+    }
+    await checkHealth();
+    if (config.online) {
+      toast('Connecté à la X96 Mini');
+      setTimeout(() => settingsOverlay.classList.remove('open'), 500);
+    } else {
+      throw new Error('Serveur non accessible');
+    }
+  } catch (error) {
+    toast(error.message || 'Échec de connexion');
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  stopDpadPress();
+  if (!document.hidden) checkHealth();
+});
+
+// Init
+checkHealth();
+setInterval(() => {
+  if (!document.hidden) checkHealth();
+}, 12000);
+</script>
+</body>
+</html>

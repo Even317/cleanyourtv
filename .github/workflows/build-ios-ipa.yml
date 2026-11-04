@@ -1,0 +1,57 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ios_app/**'
+      - '.github/workflows/build-ios-ipa.yml'
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile iOS Mach-O Binary
+        run: |
+          cd ios_app
+          xcrun -sdk iphoneos swiftc \
+            -target arm64-apple-ios14.0 \
+            main.swift AppDelegate.swift ViewController.swift \
+            -framework UIKit \
+            -framework WebKit \
+            -O \
+            -o X96Remote
+          chmod +x X96Remote
+
+      - name: Package Payload and IPA
+        run: |
+          mkdir -p Payload/X96Remote.app
+          cp ios_app/X96Remote Payload/X96Remote.app/
+          cp ios_app/Info.plist Payload/X96Remote.app/
+          
+          # Ad-hoc code signature for sideloading / Esign
+          codesign -s - --force --deep --timestamp=none Payload/X96Remote.app
+          
+          zip -r X96Remote.ipa Payload
+          ls -lh X96Remote.ipa
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: X96Remote-IPA
+          path: X96Remote.ipa
+          if-no-files-found: error
+
+      - name: Create GitHub Release with IPA
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        with:
+          tag_name: v-ios-remote
+          name: "X96 Remote iOS (.IPA)"
+          body: "Application iOS native avec bridge Taptic Engine (vibrations physiques réelles iPhone). Prête à importer et signer dans Esign."
+          files: X96Remote.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
