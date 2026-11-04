@@ -546,10 +546,18 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return;
         }
         if (action != null) {
-            // NEW_TASK only: with RESET_TASK_IF_NEEDED, Android just brings a running task of the app to the front
-            // ("Activity not started"), so the screen never opens while the app is up, e.g. MagentaTV's boot-time task.
-            Intent byAction = LaunchActions.intent(e.pkg, action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            if (ctx.getPackageManager().resolveActivity(byAction, 0) != null) i = byAction;
+            // Support "package:<targetPkg>" to redirect a tile to another package directly
+            if (action.startsWith("package:")) {
+                String targetPkg = action.substring("package:".length()).trim();
+                Intent targetIntent = ctx.getPackageManager().getLeanbackLaunchIntentForPackage(targetPkg);
+                if (targetIntent == null) targetIntent = ctx.getPackageManager().getLaunchIntentForPackage(targetPkg);
+                if (targetIntent != null) i = targetIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            } else {
+                // NEW_TASK only: with RESET_TASK_IF_NEEDED, Android just brings a running task of the app to the front
+                // ("Activity not started"), so the screen never opens while the app is up, e.g. MagentaTV's boot-time task.
+                Intent byAction = LaunchActions.intent(e.pkg, action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (ctx.getPackageManager().resolveActivity(byAction, 0) != null) i = byAction;
+            }
         }
         try {
             ctx.startActivity(i);

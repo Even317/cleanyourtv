@@ -1231,11 +1231,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** True when PackageManager reports apps changed since the last rebuild (one binder call). */
     private boolean packagesChangedSinceRebuild() {
+        if (android.os.Build.VERSION.SDK_INT < 26) {
+            return false;
+        }
         ChangedPackages changed = getPackageManager().getChangedPackages(packageSequence);
         return changed != null && !changed.getPackageNames().isEmpty();
     }
 
     private int currentPackageSequence(int since) {
+        if (android.os.Build.VERSION.SDK_INT < 26) {
+            return since;
+        }
         ChangedPackages changed = getPackageManager().getChangedPackages(since);
         return changed != null ? changed.getSequenceNumber() : since;
     }
@@ -4081,3 +4087,4 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 }
+

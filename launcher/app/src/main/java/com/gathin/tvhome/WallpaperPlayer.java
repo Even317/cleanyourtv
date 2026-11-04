@@ -5,11 +5,16 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.SurfaceTexture;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.Surface;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -33,6 +38,10 @@ import java.util.concurrent.Executors;
 final class WallpaperPlayer {
     private final FrameLayout root;
     private final ImageView image;
+    private TextureView textureView;
+    private MediaPlayer mediaPlayer;
+    private Surface mediaSurface;
+    private final File videoFile;
     private final int backgroundColor;
     private final List<File> files;
     private final long interval;
@@ -64,6 +73,7 @@ final class WallpaperPlayer {
 
     WallpaperPlayer(Context context, FrameLayout root, Config config) {
         this.root = root;
+        this.videoFile = config.wallpaperVideo;
         backgroundColor = config.backgroundColor;
         files = new ArrayList<>(config.wallpapers);
         interval = config.wallpaperRotationMinutes * 60_000L;
@@ -91,10 +101,15 @@ final class WallpaperPlayer {
         names = config.wallpaperCaptions && config.wallpaperEnabled && !files.isEmpty()
                 ? WallpaperCaptions.read(files.get(0).getParentFile()) : Collections.emptyMap();
         caption = names.isEmpty() ? null : makeCaption(context, root);
-        if (config.wallpaperEnabled && !files.isEmpty()) {
-            root.addView(image, 0, new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            showFirst();
+        if (config.wallpaperEnabled) {
+            if (videoFile != null && videoFile.isFile() && videoFile.length() > 0) {
+                setupVideoWallpaper(context);
+            }
+            if (!files.isEmpty()) {
+                root.addView(image, 0, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                showFirst();
+            }
         }
     }
 
@@ -128,13 +143,102 @@ final class WallpaperPlayer {
         }
     }
 
+    private void setupVideoWallpaper(Context context) {
+        textureView = new TextureView(context);
+        textureView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+            @Override
+            public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int w, int h) {
+                mediaSurface = new Surface(surfaceTexture);
+                playVideo();
+            }
+
+            @Override
+            public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int w, int h) {}
+
+            @Override
+            public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+                stopVideo();
+                if (mediaSurface != null) {
+                    mediaSurface.release();
+                    mediaSurface = null;
+                }
+                return true;
+            }
+
+            @Override
+            public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
+        });
+        root.addView(textureView, 0, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    }
+
+    private void playVideo() {
+        if (closed || videoFile == null || mediaSurface == null || !mediaSurface.isValid()) return;
+        try {
+            if (mediaPlayer == null) {
+                mediaPlayer = new MediaPlayer();
+                mediaPlayer.setSurface(mediaSurface);
+                mediaPlayer.setDataSource(videoFile.getAbsolutePath());
+                mediaPlayer.setLooping(true);
+                mediaPlayer.setVolume(0f, 0f); // Mute audio
+                mediaPlayer.setOnPreparedListener(mp -> {
+                    if (active && !closed) {
+                        mp.start();
+                        root.setBackground(null);
+                    }
+                });
+                mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                    Log.w("TvHome.Wallpaper", "Video wallpaper error: " + what + ", " + extra);
+                    stopVideo();
+                    return true;
+                });
+                mediaPlayer.prepareAsync();
+            } else {
+                mediaPlayer.setSurface(mediaSurface);
+                if (active && !mediaPlayer.isPlaying()) {
+                    mediaPlayer.start();
+                    root.setBackground(null);
+                }
+            }
+        } catch (Exception e) {
+            Log.w("TvHome.Wallpaper", "Failed to start video wallpaper", e);
+            stopVideo();
+        }
+    }
+
+    private void stopVideo() {
+        if (mediaPlayer != null) {
+            try {
+                if (mediaPlayer.isPlaying()) {
+                    mediaPlayer.stop();
+                }
+                mediaPlayer.reset();
+                mediaPlayer.release();
+            } catch (Exception ignored) {}
+            mediaPlayer = null;
+        }
+    }
+
     void start() {
         active = true;
+        if (mediaPlayer != null && mediaSurface != null && mediaSurface.isValid()) {
+            try {
+                if (!mediaPlayer.isPlaying()) mediaPlayer.start();
+            } catch (Exception ignored) {}
+        } else if (textureView != null && textureView.isAvailable() && mediaSurface != null) {
+            playVideo();
+        }
         update();
     }
 
     void stop() {
         active = false;
+        if (mediaPlayer != null) {
+            try {
+                if (mediaPlayer.isPlaying()) mediaPlayer.pause();
+            } catch (Exception ignored) {}
+        }
     }
 
     /** Drops the wallpaper texture when Home is hidden and Android asks the process to free memory. */
@@ -162,6 +266,11 @@ final class WallpaperPlayer {
     void close() {
         active = false;
         closed = true;
+        stopVideo();
+        if (mediaSurface != null) {
+            mediaSurface.release();
+            mediaSurface = null;
+        }
         decoder.shutdownNow();
     }
 
@@ -291,12 +400,16 @@ final class WallpaperPlayer {
             Bitmap decoded = BitmapFactory.decodeFile(file.getPath(), options);
             if (decoded == null) return null;
             if (dimColor != 0) new Canvas(decoded).drawColor(dimColor);
-            // One copy in GPU memory instead of a software bitmap plus its texture; the decode stays off the UI
-            // thread for rotations, and Home's return no longer uploads 4-8 MB to the GPU.
-            Bitmap gpu = decoded.copy(Bitmap.Config.HARDWARE, false);
-            if (gpu == null) return decoded;
-            decoded.recycle();
-            return gpu;
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                try {
+                    Bitmap gpu = decoded.copy(Bitmap.Config.HARDWARE, false);
+                    if (gpu != null) {
+                        decoded.recycle();
+                        return gpu;
+                    }
+                } catch (Throwable ignored) {}
+            }
+            return decoded;
         } catch (Exception | OutOfMemoryError failure) {
             return null;
         }
